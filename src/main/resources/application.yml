@@ -3,3 +3,12 @@ management:
     jmx:
       exposure:
         include: "*"
+spring:
+  datasource:
+    username: "sa"
+    password: "UlF8QCHp2yCh7q6JGN4VDeY7"
+    url: "jdbc:sqlserver://localhost;databaseName=ecommerce;encrypt=true;trustServerCertificate=true"
+  jpa:
+    hibernate:
+      ddl-auto: update
+
