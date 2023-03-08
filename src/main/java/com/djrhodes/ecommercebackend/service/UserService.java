@@ -1,6 +1,7 @@
 package com.djrhodes.ecommercebackend.service;
 
 import com.djrhodes.ecommercebackend.api.model.RegistrationBody;
+import com.djrhodes.ecommercebackend.exception.UserAlreadyExistsException;
 import com.djrhodes.ecommercebackend.model.LocalUser;
 import com.djrhodes.ecommercebackend.model.repository.LocalUserRepository;
 import org.springframework.stereotype.Service;
@@ -26,8 +27,13 @@ public class UserService {
      * Registers a user with the provided information.
      * @param registrationBody The registration information.
      * @return The localUser that has been written to the database.
+     * @hrows UserAlreadyExistsException thrown if a user already exists with given username or email.
      */
-    public LocalUser registerUser(RegistrationBody registrationBody) {
+    public LocalUser registerUser(RegistrationBody registrationBody) throws UserAlreadyExistsException {
+        if (localUserRepository.findByEmailIgnoreCase(registrationBody.getEmail()).isPresent()
+            || localUserRepository.findByUsernameIgnoreCase(registrationBody.getUsername()).isPresent()) {
+            throw new UserAlreadyExistsException();
+        }
         LocalUser user = new LocalUser();
         user.setUsername(registrationBody.getUsername());
         user.setEmail(registrationBody.getEmail());
