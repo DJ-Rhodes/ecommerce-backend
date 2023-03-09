@@ -14,13 +14,17 @@ public class UserService {
 
     /** The localUserRepository. */
     private LocalUserRepository localUserRepository;
+    private EncryptionService encryptionService;
 
     /**
      * Spring injected constructor.
+     *
      * @param localUserRepository The localUser Repository.
+     * @param encryptionService
      */
-    public UserService(LocalUserRepository localUserRepository) {
+    public UserService(LocalUserRepository localUserRepository, EncryptionService encryptionService) {
         this.localUserRepository = localUserRepository;
+        this.encryptionService = encryptionService;
     }
 
     /**
@@ -39,8 +43,7 @@ public class UserService {
         user.setEmail(registrationBody.getEmail());
         user.setFirstName(registrationBody.getFirstName());
         user.setLastName(registrationBody.getLastName());
-        //TODO: Encrypt passwords
-        user.setPassword(registrationBody.getPassword());
+        user.setPassword(encryptionService.encryptPassword(registrationBody.getPassword()));
         return localUserRepository.save(user);
     }
 

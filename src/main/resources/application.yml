@@ -1,8 +1,11 @@
+# Exposes endpoints to view through actuator.
 management:
   endpoints:
     jmx:
       exposure:
         include: "*"
+
+# Database configuration and connection.
 spring:
   datasource:
     username: "sa"
@@ -12,3 +15,7 @@ spring:
     hibernate:
       ddl-auto: update
 
+# Encryption configuration.
+encryption:
+  salt:
+    rounds: 10
