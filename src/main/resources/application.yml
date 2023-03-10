@@ -19,3 +19,10 @@ spring:
 encryption:
   salt:
     rounds: 10
+
+# JWT configuration.
+jwt:
+  algorithm:
+    key: "my-secret-token-to-change-in-production-environment"
+  issuer: "ecommerce"
+  expiryInSeconds: 1200

@@ -1,5 +1,7 @@
 package com.djrhodes.ecommercebackend.api.controller.auth;
 
+import com.djrhodes.ecommercebackend.api.model.LoginBody;
+import com.djrhodes.ecommercebackend.api.model.LoginResponse;
 import com.djrhodes.ecommercebackend.api.model.RegistrationBody;
 
 import com.djrhodes.ecommercebackend.exception.UserAlreadyExistsException;
@@ -40,6 +42,24 @@ public class AuthenticationController {
         } catch (UserAlreadyExistsException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
+    }
+
+    /**
+     * Post Mapping to handle user logins to provide authentication token.
+     * @param loginBody The login information.
+     * @return The authentication token if successful.
+     */
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> loginUser(@Valid @RequestBody LoginBody loginBody){
+        String jwt = userService.loginUser(loginBody);
+        if (jwt == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } else {
+            LoginResponse loginResponse = new LoginResponse();
+            loginResponse.setJwt(jwt);
+            return ResponseEntity.ok(loginResponse);
+        }
+
     }
 
 }

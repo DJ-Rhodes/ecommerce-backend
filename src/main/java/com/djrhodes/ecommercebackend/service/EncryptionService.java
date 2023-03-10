@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class EncryptionService {
 
-    /** The number of salt rounds encyrption should run. */
+    /** The number of salt rounds encryption should run. */
     @Value("${encryption.salt.rounds}")
     private int saltRounds;
     /** The salt built. */
