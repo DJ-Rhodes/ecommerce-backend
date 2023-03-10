@@ -5,10 +5,12 @@ import com.djrhodes.ecommercebackend.api.model.LoginResponse;
 import com.djrhodes.ecommercebackend.api.model.RegistrationBody;
 
 import com.djrhodes.ecommercebackend.exception.UserAlreadyExistsException;
+import com.djrhodes.ecommercebackend.model.LocalUser;
 import com.djrhodes.ecommercebackend.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -60,6 +62,16 @@ public class AuthenticationController {
             return ResponseEntity.ok(loginResponse);
         }
 
+    }
+
+    /**
+     * Gets the profile of the currently logged-in user.
+     * @param user The authentication principal object.
+     * @return The user profile.
+     */
+    @GetMapping("/me")
+    public LocalUser getLoggedInUserProfile(@AuthenticationPrincipal LocalUser user) {
+        return user;
     }
 
 }
