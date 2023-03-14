@@ -22,7 +22,7 @@ public class ProductService {
     public ProductService(ProductRepository productRepository) {
         this.productRepository = productRepository;
     }
-    
+
     /**
      * Gets the all products available.
      * @return The list of products.
