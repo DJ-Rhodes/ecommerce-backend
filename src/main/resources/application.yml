@@ -26,3 +26,13 @@ jwt:
     key: "my-secret-token-to-change-in-production-environment"
   issuer: "ecommerce"
   expiryInSeconds: 1200
+
+# Email Configuration
+email:
+  address:
+    from: "no-reply@ecomm.co.za"
+
+# General Application Configuration.
+app:
+  frontend:
+    url: "http://ecomm.com"

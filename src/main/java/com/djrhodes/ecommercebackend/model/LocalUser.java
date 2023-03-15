@@ -38,6 +38,25 @@ public class LocalUser {
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<Address> addresses = new ArrayList<>();
+    /** Verification tokens sent to the user. */
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<VerificationToken> verificationTokens = new ArrayList<>();
+
+    /**
+     * Gets the list of VerificationTokens sent to the user.
+     * @return The list of tokens.
+     */
+    public List<VerificationToken> getVerificationTokens() {
+        return verificationTokens;
+    }
+
+    /**
+     * Sets the list of VerificationTokens sent to the user.
+     * @param verificationTokens The list of tokens.
+     */
+    public void setVerificationTokens(List<VerificationToken> verificationTokens) {
+        this.verificationTokens = verificationTokens;
+    }
 
     /**
      * Gets the addresses associated with the user.
