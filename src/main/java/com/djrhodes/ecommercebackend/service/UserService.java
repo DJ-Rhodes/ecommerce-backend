@@ -4,13 +4,17 @@ import com.djrhodes.ecommercebackend.api.model.LoginBody;
 import com.djrhodes.ecommercebackend.api.model.RegistrationBody;
 import com.djrhodes.ecommercebackend.exception.EmailFailureException;
 import com.djrhodes.ecommercebackend.exception.UserAlreadyExistsException;
+import com.djrhodes.ecommercebackend.exception.UserNotVerifiedException;
 import com.djrhodes.ecommercebackend.model.LocalUser;
 import com.djrhodes.ecommercebackend.model.VerificationToken;
 import com.djrhodes.ecommercebackend.model.repository.LocalUserRepository;
 import com.djrhodes.ecommercebackend.model.repository.VerificationTokenRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -89,15 +93,48 @@ public class UserService {
      * @param loginBody The login request.
      * @return The authentication token. Null if the request was invalid.
      */
-    public String loginUser(LoginBody loginBody) {
+    public String loginUser(LoginBody loginBody) throws EmailFailureException, UserNotVerifiedException {
         Optional<LocalUser> optionalUser = localUserRepository.findByUsernameIgnoreCase(loginBody.getUsername());
         if (optionalUser.isPresent()) {
             LocalUser user = optionalUser.get();
             if (encryptionService.verifyPassword(loginBody.getPassword(), user.getPassword())) {
-                return jwtService.generateJWT(user);
+                if (user.getEmailVerified()) {
+                    return jwtService.generateJWT(user);
+                } else {
+                    List<VerificationToken> verificationTokens = user.getVerificationTokens();
+                    boolean resend = verificationTokens.size() == 0 ||
+                            verificationTokens.get(0).getCreatedTimestamp().before(new Timestamp(System.currentTimeMillis() - (60 * 60 * 1000)));
+                    if (resend) {
+                        VerificationToken verificationToken = createVerificationToken(user);
+                        verificationTokenRepository.save(verificationToken);
+                        emailService.sendVerificationEmail(verificationToken);
+                    }
+                    throw new UserNotVerifiedException(resend);
+                }
             }
         }
         return null;
+    }
+
+    /**
+     * Verifies a user from the given token.
+     * @param token The token to use to verify a user.
+     * @return True if it was verified, false if already verified or token invalid.
+     */
+    @Transactional
+    public boolean verifyUser(String token) {
+        Optional<VerificationToken> optionalVerificationToken = verificationTokenRepository.findByToken(token);
+        if (optionalVerificationToken.isPresent()) {
+            VerificationToken verificationToken = optionalVerificationToken.get();
+            LocalUser user = verificationToken.getUser();
+            if (!user.getEmailVerified()) {
+                user.setEmailVerified(true);
+                localUserRepository.save(user);
+                verificationTokenRepository.deleteByUser(user);
+                return true;
+            }
+        }
+        return false;
     }
 
 }

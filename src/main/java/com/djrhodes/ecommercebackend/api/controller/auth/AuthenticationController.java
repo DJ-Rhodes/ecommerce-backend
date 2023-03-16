@@ -4,7 +4,9 @@ import com.djrhodes.ecommercebackend.api.model.LoginBody;
 import com.djrhodes.ecommercebackend.api.model.LoginResponse;
 import com.djrhodes.ecommercebackend.api.model.RegistrationBody;
 
+import com.djrhodes.ecommercebackend.exception.EmailFailureException;
 import com.djrhodes.ecommercebackend.exception.UserAlreadyExistsException;
+import com.djrhodes.ecommercebackend.exception.UserNotVerifiedException;
 import com.djrhodes.ecommercebackend.model.LocalUser;
 import com.djrhodes.ecommercebackend.service.UserService;
 import jakarta.validation.Valid;
@@ -43,25 +45,56 @@ public class AuthenticationController {
             return ResponseEntity.ok().build();
         } catch (UserAlreadyExistsException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        } catch (EmailFailureException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     /**
      * Post Mapping to handle user logins to provide authentication token.
      * @param loginBody The login information.
-     * @return The authentication token if successful.
+     * @return The login response to front-end.
      */
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> loginUser(@Valid @RequestBody LoginBody loginBody){
-        String jwt = userService.loginUser(loginBody);
+        String jwt = null;
+        try {
+            jwt = userService.loginUser(loginBody);
+        } catch (EmailFailureException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (UserNotVerifiedException e) {
+            LoginResponse loginResponse = new LoginResponse();
+            loginResponse.setSuccess(false);
+            String reason = "USER_NOT_VERIFIED";
+            if (e.isNewEmailSent()) {
+                reason += "_EMAIL_RESENT";
+            }
+            loginResponse.setFailureReason(reason);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(loginResponse);
+        }
         if (jwt == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } else {
             LoginResponse loginResponse = new LoginResponse();
             loginResponse.setJwt(jwt);
+            loginResponse.setSuccess(true);
             return ResponseEntity.ok(loginResponse);
         }
 
+    }
+
+    /**
+     * Post mapping to verify the email of an account using the emailed token.
+     * @param token The token emailed for verification.
+     * @return Response 200 if successful. Response 409 if failure.
+     */
+    @PostMapping("/verify")
+    public ResponseEntity verifyEmail(@RequestParam String token) {
+        if (userService.verifyUser(token)) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
     }
 
     /**

@@ -40,7 +40,27 @@ public class LocalUser {
     private List<Address> addresses = new ArrayList<>();
     /** Verification tokens sent to the user. */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id desc")
     private List<VerificationToken> verificationTokens = new ArrayList<>();
+    /** Was email verified? */
+    @Column(name = "email_verified", nullable = false)
+    private Boolean emailVerified = false;
+
+    /**
+     * Gets whether email is verified.
+     * @return Email verification sate.
+     */
+    public Boolean getEmailVerified() {
+        return emailVerified;
+    }
+
+    /**
+     * Sets the email verifications state.
+     * @param emailVerified The verification state to set.
+     */
+    public void setEmailVerified(Boolean emailVerified) {
+        this.emailVerified = emailVerified;
+    }
 
     /**
      * Gets the list of VerificationTokens sent to the user.

@@ -51,7 +51,7 @@ public class EmailService {
         simpleMailMessage.setTo(verificationToken.getUser().getEmail());
         simpleMailMessage.setSubject("Verify Email Address");
         simpleMailMessage.setText("Please follow the verification link below to activate your account.\n" +
-                url + "auth/verify?token=" + verificationToken.getToken());
+                url + "/auth/verify?token=" + verificationToken.getToken());
         try {
             javaMailSender.send(simpleMailMessage);
         } catch (MailException mailException) {
