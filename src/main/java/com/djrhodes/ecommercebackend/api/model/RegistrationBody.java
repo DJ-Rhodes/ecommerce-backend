@@ -49,11 +49,51 @@ public class RegistrationBody {
     }
 
     /**
-     * Gets the passwword.
+     * Gets the password.
      * @return the Password.
      */
     public String getPassword() {
         return password;
+    }
+
+    /**
+     * Sets the username.
+     * @param username The Username to be set.
+     */
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    /**
+     * Sets the email address.
+     * @param email The email address to be set.
+     */
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    /**
+     * Sets the password.
+     * @param password The password to be set.
+     */
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    /**
+     * Sets the user's first name.
+     * @param firstName The first name to be set.
+     */
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    /**
+     * Sets the user's last name.
+     * @param lastName The last name to be set.
+     */
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 
     /**
