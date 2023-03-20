@@ -26,6 +26,22 @@ public class LoginBody {
     }
 
     /**
+     * Sets the Username.
+     * @param username The username to be set.
+     */
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    /**
+     * Sets the Password.
+     * @param password The password to be set.
+     */
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    /**
      * Gets the password being used to log in.
      * @return The password.
      */
