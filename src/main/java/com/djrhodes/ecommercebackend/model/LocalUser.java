@@ -2,8 +2,11 @@ package com.djrhodes.ecommercebackend.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -11,7 +14,7 @@ import java.util.List;
  */
 @Entity
 @Table(name = "local_user")
-public class LocalUser {
+public class LocalUser implements UserDetails {
 
     /** Unique ID for the user. */
     @Id
@@ -39,6 +42,7 @@ public class LocalUser {
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<Address> addresses = new ArrayList<>();
     /** Verification tokens sent to the user. */
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id desc")
     private List<VerificationToken> verificationTokens = new ArrayList<>();
@@ -143,6 +147,14 @@ public class LocalUser {
     }
 
     /**
+     * {@inheritDoc}
+     */
+    @JsonIgnore
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of();
+    }
+
+    /**
      * Gets the Password of the user.
      * @return The Password.
      */
@@ -164,6 +176,38 @@ public class LocalUser {
      */
     public String getUsername() {
         return username;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @JsonIgnore
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @JsonIgnore
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @JsonIgnore
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @JsonIgnore
+    public boolean isEnabled() {
+        return true;
     }
 
     /**
