@@ -53,7 +53,7 @@ public class JWTServiceTest {
      * Tests that the authentication token was generated with the provided algorithm.
      */
     @Test
-    public void testJWTNotGeneratedByUs() {
+    public void testLoginJWTNotGeneratedByUs() {
         String token = JWT.create().withClaim("USERNAME", "UserA")
                 .sign(Algorithm.HMAC256("Not the correct secret."));
         Assertions.assertThrows(SignatureVerificationException.class,
@@ -64,10 +64,43 @@ public class JWTServiceTest {
      * Tests the that authentication token was issued by the correct issuer.
      */
     @Test
-    public void testJWTCorrectlySignedNoIssuer() {
+    public void testLoginJWTCorrectlySignedNoIssuer() {
         String token = JWT.create().withClaim("USERNAME", "UserA")
                 .sign((Algorithm.HMAC256(algorithmKey)));
         Assertions.assertThrows(MissingClaimException.class,
                 () -> jwtService.getUsername(token));
+    }
+
+    /**
+     * Tests the password reset generation and verification.
+     */
+    @Test
+    public void testPasswordResetToken() {
+        LocalUser user = localUserRepository.findByUsernameIgnoreCase("UserA").get();
+        String token = jwtService.generatePasswordResetJWT(user);
+        Assertions.assertEquals(user.getEmail(),
+                jwtService.getResetPasswordEmail(token),"Email should match that inside JWT.");
+    }
+
+    /**
+     * Tests that the authentication token was generated with the provided algorithm.
+     */
+    @Test
+    public void testResetPasswordJWTNotGeneratedByUs() {
+        String token = JWT.create().withClaim("RESET_PASSWORD_EMAIL", "UserA@junit.com")
+                .sign(Algorithm.HMAC256("Not the correct secret."));
+        Assertions.assertThrows(SignatureVerificationException.class,
+                () -> jwtService.getResetPasswordEmail(token));
+    }
+
+    /**
+     * Tests the that authentication token was issued by the correct issuer.
+     */
+    @Test
+    public void testResetPasswordJWTCorrectlySignedNoIssuer() {
+        String token = JWT.create().withClaim("RESET_PASSWORD_EMAIL", "UserA@junit.com")
+                .sign((Algorithm.HMAC256(algorithmKey)));
+        Assertions.assertThrows(MissingClaimException.class,
+                () -> jwtService.getResetPasswordEmail(token));
     }
 }

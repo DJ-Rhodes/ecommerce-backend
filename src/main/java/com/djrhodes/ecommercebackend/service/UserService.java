@@ -1,8 +1,10 @@
 package com.djrhodes.ecommercebackend.service;
 
 import com.djrhodes.ecommercebackend.api.model.LoginBody;
+import com.djrhodes.ecommercebackend.api.model.PasswordResetBody;
 import com.djrhodes.ecommercebackend.api.model.RegistrationBody;
 import com.djrhodes.ecommercebackend.exception.EmailFailureException;
+import com.djrhodes.ecommercebackend.exception.EmailNotFoundException;
 import com.djrhodes.ecommercebackend.exception.UserAlreadyExistsException;
 import com.djrhodes.ecommercebackend.exception.UserNotVerifiedException;
 import com.djrhodes.ecommercebackend.model.LocalUser;
@@ -135,6 +137,37 @@ public class UserService {
             }
         }
         return false;
+    }
+
+    /**
+     * Sends the user a forgot password reset based on the email provided.
+     * @param email The email to send to.
+     * @throws EmailNotFoundException Thrown if there is no user with that email.
+     * @throws EmailFailureException
+     */
+    public void forgotPassword(String email) throws EmailNotFoundException, EmailFailureException {
+        Optional<LocalUser> opUser = localUserRepository.findByEmailIgnoreCase(email);
+        if(opUser.isPresent()) {
+            LocalUser user = opUser.get();
+            String token = jwtService.generatePasswordResetJWT(user);
+            emailService.sendPasswordResetEmail(user, token);
+        } else {
+            throw new EmailNotFoundException();
+        }
+    }
+
+    /**
+     * Resets the users password using a given token and email.
+     * @param body The password reset information.
+     */
+    public void resetPassword(PasswordResetBody body) {
+        String email = jwtService.getResetPasswordEmail(body.getToken());
+        Optional<LocalUser> opUser = localUserRepository.findByEmailIgnoreCase(email);
+        if(opUser.isPresent()) {
+            LocalUser user = opUser.get();
+            user.setPassword(encryptionService.encryptPassword(body.getPassword()));
+            localUserRepository.save(user);
+        }
     }
 
 }

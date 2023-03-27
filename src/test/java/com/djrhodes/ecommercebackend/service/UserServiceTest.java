@@ -1,11 +1,15 @@
 package com.djrhodes.ecommercebackend.service;
 
 import com.djrhodes.ecommercebackend.api.model.LoginBody;
+import com.djrhodes.ecommercebackend.api.model.PasswordResetBody;
 import com.djrhodes.ecommercebackend.api.model.RegistrationBody;
 import com.djrhodes.ecommercebackend.exception.EmailFailureException;
+import com.djrhodes.ecommercebackend.exception.EmailNotFoundException;
 import com.djrhodes.ecommercebackend.exception.UserAlreadyExistsException;
 import com.djrhodes.ecommercebackend.exception.UserNotVerifiedException;
+import com.djrhodes.ecommercebackend.model.LocalUser;
 import com.djrhodes.ecommercebackend.model.VerificationToken;
+import com.djrhodes.ecommercebackend.model.repository.LocalUserRepository;
 import com.djrhodes.ecommercebackend.model.repository.VerificationTokenRepository;
 import com.icegreen.greenmail.configuration.GreenMailConfiguration;
 import com.icegreen.greenmail.junit5.GreenMailExtension;
@@ -40,6 +44,15 @@ public class UserServiceTest {
     /** The Verification Token Repository. */
     @Autowired
     private VerificationTokenRepository verificationTokenRepository;
+    /** The JWT Service. */
+    @Autowired
+    private JWTService jwtService;
+    /** The Local User Repository. */
+    @Autowired
+    private LocalUserRepository localUserRepository;
+    /** The Encryption Service. */
+    @Autowired
+    private EncryptionService encryptionService;
 
     /**
      * Tests the registration process of the user.
@@ -122,6 +135,40 @@ public class UserServiceTest {
             Assertions.assertTrue(userService.verifyUser(token), "Token should be valid.");
             Assertions.assertNotNull(loginBody, "User should be verified.");
         }
+    }
+
+    /**
+     * Tests the forgotPassword method in the User Service.
+     * @throws MessagingException
+     */
+    @Test
+    @Transactional
+    public void testForgotPassword() throws MessagingException {
+        Assertions.assertThrows(EmailNotFoundException.class,
+                () -> userService.forgotPassword("UserNotExist@junit.com"));
+        Assertions.assertDoesNotThrow(() -> userService.forgotPassword("UserA@junit.com")
+                , "Non-existing email should be rejected.");
+        Assertions.assertEquals("UserA@junit.com",
+                greenMailExtension.getReceivedMessages()[0]
+                .getRecipients(Message.RecipientType.TO)[0]
+                .toString(), "Password reset email should be set.");
+    }
+
+    /**
+     * Tests the resetPassword method in the User Service.
+     * @throws MessagingException
+     */
+    @Test
+    public void testResetPassword() {
+        LocalUser user = localUserRepository.findByUsernameIgnoreCase("UserA").get();
+        String token = jwtService.generatePasswordResetJWT(user);
+        PasswordResetBody body = new PasswordResetBody();
+        body.setToken(token);
+        body.setPassword("Password1234");
+        userService.resetPassword(body);
+        user = localUserRepository.findByUsernameIgnoreCase("UserA").get();
+        Assertions.assertTrue(encryptionService.verifyPassword("Password1234", user.getPassword())
+                , "Password reset should be updated in database.");
     }
 
 }

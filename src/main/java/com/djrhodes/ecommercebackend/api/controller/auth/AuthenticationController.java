@@ -2,9 +2,11 @@ package com.djrhodes.ecommercebackend.api.controller.auth;
 
 import com.djrhodes.ecommercebackend.api.model.LoginBody;
 import com.djrhodes.ecommercebackend.api.model.LoginResponse;
+import com.djrhodes.ecommercebackend.api.model.PasswordResetBody;
 import com.djrhodes.ecommercebackend.api.model.RegistrationBody;
 
 import com.djrhodes.ecommercebackend.exception.EmailFailureException;
+import com.djrhodes.ecommercebackend.exception.EmailNotFoundException;
 import com.djrhodes.ecommercebackend.exception.UserAlreadyExistsException;
 import com.djrhodes.ecommercebackend.exception.UserNotVerifiedException;
 import com.djrhodes.ecommercebackend.model.LocalUser;
@@ -107,4 +109,31 @@ public class AuthenticationController {
         return user;
     }
 
+    /**
+     * Post Mapping for sending an email to the user with a link to reset their password.
+     * @param email The email to reset.
+     * @return Ok if sent, bad request if email not found.
+     */
+    @PostMapping("/forgot")
+    public ResponseEntity forgotPassword(@RequestParam String email) {
+        try {
+            userService.forgotPassword(email);
+            return ResponseEntity.ok().build();
+        } catch (EmailNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (EmailFailureException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Post Mapping for resetting the users password with the given token and password.
+     * @param body The information for the password reset.
+     * @return Okay if password was set.
+     */
+    @PostMapping("/reset")
+    public ResponseEntity resetPassword(@Valid @RequestBody PasswordResetBody body) {
+        userService.resetPassword(body);
+        return ResponseEntity.ok().build();
+    }
 }

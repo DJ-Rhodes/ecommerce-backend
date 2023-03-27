@@ -1,6 +1,7 @@
 package com.djrhodes.ecommercebackend.service;
 
 import com.djrhodes.ecommercebackend.exception.EmailFailureException;
+import com.djrhodes.ecommercebackend.model.LocalUser;
 import com.djrhodes.ecommercebackend.model.VerificationToken;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
@@ -52,6 +53,25 @@ public class EmailService {
         simpleMailMessage.setSubject("Verify Email Address");
         simpleMailMessage.setText("Please follow the verification link below to activate your account.\n" +
                 url + "/auth/verify?token=" + verificationToken.getToken());
+        try {
+            javaMailSender.send(simpleMailMessage);
+        } catch (MailException mailException) {
+            throw new EmailFailureException();
+        }
+    }
+
+    /**
+     * Sends a password reset request email to the user.
+     * @param user The user to send to.
+     * @param token The token to send the user for reset.
+     * @throws EmailFailureException
+     */
+    public void sendPasswordResetEmail(LocalUser user, String token) throws EmailFailureException{
+        SimpleMailMessage simpleMailMessage = makeMailMessage();
+        simpleMailMessage.setTo(user.getEmail());
+        simpleMailMessage.setSubject("Reset Password Request Link");
+        simpleMailMessage.setText("A password reset was request on our website. Please follow the link below to reset your password.\n"
+                + url + "/auth/reset?token=" + token);
         try {
             javaMailSender.send(simpleMailMessage);
         } catch (MailException mailException) {
