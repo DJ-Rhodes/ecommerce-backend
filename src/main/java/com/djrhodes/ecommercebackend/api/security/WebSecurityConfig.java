@@ -42,6 +42,8 @@ public class WebSecurityConfig {
                 .requestMatchers("/auth/forgot").permitAll()
                 .requestMatchers("/auth/reset").permitAll()
                 .requestMatchers("/error").permitAll()
+                .requestMatchers("/websocket").permitAll()
+                .requestMatchers("/websocket/**").permitAll()
                 .anyRequest().authenticated();
         return httpSecurity.build();
     }

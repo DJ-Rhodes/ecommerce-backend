@@ -1,10 +1,13 @@
 package com.djrhodes.ecommercebackend.api.controller.user;
 
+import com.djrhodes.ecommercebackend.api.model.DataChange;
 import com.djrhodes.ecommercebackend.model.Address;
 import com.djrhodes.ecommercebackend.model.LocalUser;
 import com.djrhodes.ecommercebackend.model.repository.AddressRepository;
+import com.djrhodes.ecommercebackend.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,13 +23,22 @@ public class UserController {
 
     /** The Address Repository. */
     private AddressRepository addressRepository;
+    /** The Simp Messaging Template. */
+    private SimpMessagingTemplate simpMessagingTemplate;
+    /** The User Service. */
+    private UserService userService;
 
     /**
      * Spring injected constructor.
+     *
      * @param addressRepository
+     * @param simpMessagingTemplate
+     * @param userService
      */
-    public UserController(AddressRepository addressRepository) {
+    public UserController(AddressRepository addressRepository, SimpMessagingTemplate simpMessagingTemplate, UserService userService) {
         this.addressRepository = addressRepository;
+        this.simpMessagingTemplate = simpMessagingTemplate;
+        this.userService = userService;
     }
 
     /**
@@ -37,7 +49,7 @@ public class UserController {
      */
     @GetMapping("/{userId}/address")
     public ResponseEntity<List<Address>> getAddress(@AuthenticationPrincipal LocalUser user, @PathVariable Long userId) {
-        if(!userHasPermission(user, userId)) {
+        if(!userService.userHasPermissionToUser(user, userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         return ResponseEntity.ok(addressRepository.findByUser_Id(userId));
@@ -55,14 +67,17 @@ public class UserController {
             @AuthenticationPrincipal LocalUser user,
             @PathVariable Long userId,
             @RequestBody Address address) {
-        if(!userHasPermission(user, userId)) {
+        if(!userService.userHasPermissionToUser(user, userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         address.setId(null);
         LocalUser refUser = new LocalUser();
         refUser.setId(userId);
         address.setUser(refUser);
-        return ResponseEntity.ok(addressRepository.save(address));
+        Address savedAddress = addressRepository.save(address);
+        simpMessagingTemplate.convertAndSend("/topic/user/" + userId + "/address",
+                new DataChange<>(DataChange.ChangeType.INSERT, address));
+        return ResponseEntity.ok(savedAddress);
     }
 
     /**
@@ -77,7 +92,7 @@ public class UserController {
     public ResponseEntity<Address> patchAddress (
             @AuthenticationPrincipal LocalUser user, @PathVariable Long userId,
             @PathVariable Long addressId, @RequestBody Address address) {
-        if(!userHasPermission(user, userId)) {
+        if(!userService.userHasPermissionToUser(user, userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         if(address.getId() == addressId) {
@@ -86,20 +101,14 @@ public class UserController {
                 LocalUser originalUser = opOriginalAddress.get().getUser();
                 if(originalUser.getId() == userId) {
                     address.setUser(originalUser);
-                    return ResponseEntity.ok(addressRepository.save(address));
+                    Address savedAddress = addressRepository.save(address);
+                    simpMessagingTemplate.convertAndSend("/topic/user/" + userId + "/address",
+                            new DataChange<>(DataChange.ChangeType.UPDATE, address));
+                    return ResponseEntity.ok(savedAddress);
                 }
             }
         }
         return ResponseEntity.badRequest().build();
     }
 
-    /**
-     * Method to check if an authenticated user has permission to a user ID.
-     * @param user The authenticated user.
-     * @param id The user ID.
-     * @return True if they have permission, false otherwise.
-     */
-    private boolean userHasPermission(LocalUser user, Long id) {
-        return user.getId() == id;
-    }
 }
